@@ -1,0 +1,64 @@
+# LAMMPS input for LJ binary mixture with Widom insertion
+# Equal sigma, different epsilon
+
+# Initialize
+units           lj
+atom_style      atomic
+boundary        p p p
+
+# Create simulation box
+lattice         fcc 0.8
+region          box block 0 15 0 15 0 15
+create_box      2 box
+create_atoms    1 box
+
+# Set masses (both equal to 1.0 in reduced units)
+mass            1 1.0
+mass            2 1.0
+
+# Set up 50:50 mixture
+set             group all type/fraction 2 0.5 12345
+
+# Define groups
+group           typeA type 1
+group           typeB type 2
+
+# LJ parameters
+pair_style      lj/cut 3.0
+pair_modify     tail yes
+pair_coeff      1 1 0.8 1.0    # A-A interaction
+pair_coeff      2 2 1.2 1.0    # B-B interaction
+pair_coeff      1 2 0.2 1.0 # A-B interaction
+
+# Initial velocities
+velocity        all create 5.0 12345 dist gaussian
+
+# Neighbor list
+neighbor        0.3 bin
+neigh_modify    every 1 delay 0 check yes
+
+# Time integration (NPT)
+fix             1 all npt temp 5.0 5.0 $(100*dt) iso 1.0 1.0 $(1000*dt)
+timestep        0.005
+
+# Output including enthalpy
+thermo_style    custom step temp pe ke etotal press density enthalpy vol
+thermo          1000
+
+# Equilibration
+run             10000
+
+dump            1 all custom 1000 dump.lammpstrj id type x y z
+dump_modify     1 sort id
+
+# production
+thermo_style    custom step temp pe enthalpy press vol 
+thermo          1000
+run             100000
+
+write_data      final_config_1.data
+
+unfix 1
+fix 2 all npt temp 1.0 1.0 $(100*dt) iso 1.0 1.0 $(1000*dt)
+
+run 100000

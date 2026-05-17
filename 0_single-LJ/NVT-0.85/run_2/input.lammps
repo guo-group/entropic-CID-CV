@@ -1,0 +1,108 @@
+# init
+units           lj
+atom_style      atomic
+dimension       3
+
+# Larger system
+lattice         fcc 0.85
+region          box block 0 10 0 10 0 10
+create_box      1 box
+create_atoms    1 box
+mass            1 1.0
+
+pair_style      lj/cut 2.5
+pair_coeff      1 1 1.0 1.0 2.5
+
+thermo 500
+thermo_style custom step temp pe ke press density
+#dump            1 all custom 500 melt.lammpstrj id type x y z
+#dump_modify     1 sort id
+
+# Start COLD
+velocity        all create 0.01 78728
+fix				1 all nvt temp 0.01 0.01 0.1
+timestep		0.001
+run				10000
+unfix			1
+
+dump            1 all custom 500 melt.lammpstrj id type x y z
+dump_modify     1 sort id
+
+# Equilibrate as cold crystal
+fix             1 all nvt temp 0.01 0.01 0.1 
+run             50000
+
+# ramp temp up 
+unfix           1
+fix             2 all nvt temp 0.01 1.5 0.1 
+run             500000
+
+# equil
+unfix           2
+fix             1 all nvt temp 1.5 1.5 0.1 
+run            	50000 
+
+# # ramp temp up 
+# unfix           1
+# #fix             2 all nvt temp 0.2 0.3 0.1
+# fix             2 all npt temp 0.2 0.4 0.1 iso 5.0 5.0 1.0
+# run             50000
+# 
+# # equil
+# unfix           2
+# #fix             1 all nvt temp 0.3 0.3 0.1 
+# fix             1 all npt temp 0.4 0.4 0.1 iso 5.0 5.0 1.0
+# run             50000 
+# 
+# # ramp temp up 
+# unfix           1
+# #fix             2 all nvt temp 0.3 0.4 0.1 
+# fix             2 all npt temp 0.4 0.8 0.1 iso 5.0 5.0 1.0
+# run             50000
+# 
+# # equil
+# unfix           2
+# # fix             1 all nvt temp 0.4 0.4 0.1
+# fix             1 all npt temp 0.8 0.8 0.1 iso 5.0 5.0 1.0
+# run             50000 
+# 
+# # ramp temp up 
+# unfix           1
+# # fix             2 all nvt temp 0.4 0.5 0.1 
+# fix             2 all npt temp 0.8 1.0 0.1 iso 5.0 5.0 1.0
+# run             50000
+# 
+# # equil
+# unfix           2
+# #fix             1 all nvt temp 0.5 0.5 0.1 
+# fix             1 all npt temp 1.0 1.0 0.1 iso 5.0 5.0 1.0
+# run             50000 
+# 
+# # # ramp temp up 
+# # unfix           1
+# # #fix             2 all nvt temp 0.5 0.6 0.1 
+# # fix             2 all npt temp 0.5 0.6 0.1 iso 5.0 5.0 1.0
+# # run             20000
+# # 
+# # # equil
+# # unfix           2
+# # #fix             1 all nvt temp 0.6 0.6 0.1 
+# # fix             1 all npt temp 0.6 0.6 0.1 iso 5.0 5.0 1.0
+# # run             20000 
+# # 
+# # # ramp temp up 
+# # unfix           1
+# # #fix             2 all nvt temp 0.6 0.7 0.1 
+# # fix             2 all npt temp 0.6 0.7 0.1 iso 5.0 5.0 1.0
+# # run             20000
+# # 
+# # # equil
+# # unfix           2
+# # #fix             1 all nvt temp 0.7 0.7 0.1 
+# # fix             1 all npt temp 0.7 0.7 0.1 iso 5.0 5.0 1.0
+# # run             20000 
+# # 
+# # 
+# # 
+# # 
+# # 

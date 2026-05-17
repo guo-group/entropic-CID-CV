@@ -1,0 +1,46 @@
+boundary p p p
+atom_style full
+log ./log.${Tsim}T.${Psim}P.log # change default log format
+
+#read_data aCarbon-Marks-id015-011001.data
+region simbox block 0 ${Lx} 0 ${Ly} 0 ${Lz}
+create_box 1 simbox
+create_atoms 1 random 4000 ${ranSeed} simbox
+mass 1 12.011
+group carbon type 1
+
+pair_style cedip
+
+variable	NumStep equal 10000000 # run for this many MD steps
+variable	ThermoStep equal 100 # output parameters every this many MD steps
+variable	DumpStep equal 10000 # output coordinates every this many MD steps
+variable	ResStep equal ${DumpStep}*10
+variable	psim equal v_Psim*1e-5 #convert Pa to bar
+variable thermo_step equal step
+variable temperature equal v_Tsim
+
+reset_timestep 0 
+velocity all create ${Tsim} 12345 # Set temperature and give seed
+
+fix 1 carbon nve #nvt temp ${Tsim} ${Tsim} $(100.0*dt) #54321
+fix 2 carbon temp/csvr ${Tsim} ${Tsim} $(100.0*dt) 54321
+
+thermo ${ThermoStep}
+thermo_style custom step pe ke etotal enthalpy density lx ly lz press pxx pyy pzz temp # what we want outputted
+minimize 1e-8 1e-8 1000 1000000
+
+reset_timestep	0
+timestep 0.0002 # 0.0002 ps, 0.2 fs
+
+restart ${ResStep} ./restart.${Tsim}T.${Psim}P.*.restart
+dump d1 all xyz ${DumpStep} ./dump.${Tsim}K.${Psim}P.*.xyz #dump xyz
+dump finaldump carbon atom ${NumStep} ./final.data
+run_style verlet
+
+run ${NumStep}
+
+
+######################################
+# SIMULATION DONE
+print ""
+print "--------------------------  All done -------------------------- "

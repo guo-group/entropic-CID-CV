@@ -1,0 +1,2 @@
+# q6 for density=1.8gcm3, timestep 860
+0.249755
